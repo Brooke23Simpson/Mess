@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+// Forward declaration of WordTree class
+class WordTree;
+
 class WordTree {
 public:
     // Constructor
@@ -27,7 +30,7 @@ private:
     // Private struct representing each node in the 26-ary tree
     struct TreeNode {
         bool endOfWord = false;  // Indicates if this node marks the end of a valid word
-        std::array<std::shared_ptr<TreeNode>, 26> children;  // 26 possible children for 'a' to 'z'
+        std::array<std::shared_ptr<TreeNode>, 26> children{};  // 26 possible children for 'a' to 'z'
     };
 
     // Root node of the tree
@@ -36,5 +39,8 @@ private:
     // Helper method to recursively count words in the tree
     std::size_t countWords(const std::shared_ptr<TreeNode>& node) const;
 };
+
+// Declaration for readDictionary function
+std::shared_ptr<WordTree> readDictionary(const std::string& filename);
 
 #endif // WORDTREE_HPP
