@@ -1,80 +1,61 @@
 #include "WordTree.hpp"
 #include "rlutil.h"
 #include <iostream>
+#include <memory>
 #include <string>
-#include <sstream>
+#include <vector>
 
-// Assuming readDictionary function is provided to load words
 extern std::shared_ptr<WordTree> readDictionary(const std::string& filename);
 
-void runPredictiveTextUI(std::shared_ptr<WordTree> wordTree) {
+void runPredictiveTextUI(std::shared_ptr<WordTree> wordTree)
+{
     std::string userInput;
-    const std::string PROMPT = "Type a sentence (ESC to exit): ";
-    const std::string PREDICTIONS = "--- Predictions ---";
-    
-    // Clear screen initially
     rlutil::cls();
-    
-    while (true) {
-        // Draw the input prompt and current user input
+
+    while (true)
+    {
         rlutil::locate(1, 1);
-        std::cout << PROMPT << userInput;
-        
-        // Clear any remaining characters from previous longer inputs
-        std::cout << std::string(10, ' ');
-        
-        // Draw the predictions header
+        std::cout << "Type a sentence (ESC to exit): " << userInput
+                  << std::string(30, ' '); // Clear line
+
         rlutil::locate(1, 3);
-        std::cout << PREDICTIONS;
-        
-        // Get the last word being typed
-        std::string lastWord;
-        std::size_t lastSpace = userInput.find_last_of(" \t\n\r");
-        if (lastSpace == std::string::npos) {
-            lastWord = userInput;
-        } else {
-            lastWord = userInput.substr(lastSpace + 1);
-        }
-        
-        // Get predictions for the last word
-        // Leave 5 lines for UI elements (prompt, header, etc.)
+        std::cout << "--- Predictions ---";
+
+        // Extract the last word
+        std::string lastWord =
+            userInput.substr(userInput.find_last_of(" \t\n\r") + 1);
         auto predictions = wordTree->predict(lastWord, rlutil::trows() - 5);
-        
-        // Clear previous predictions
-        for (int i = 0; i < rlutil::trows() - 5; ++i) {
+
+        for (size_t i = 0; i < predictions.size(); ++i)
+        {
             rlutil::locate(1, 5 + i);
-            std::cout << std::string(50, ' ');
+            std::cout << predictions[i] << std::string(20, ' '); // Clear line
         }
-        
-        // Display new predictions
-        for (int i = 0; i < predictions.size(); ++i) {
-            rlutil::locate(1, 5 + i);
-            std::cout << predictions[i];
-        }
-        
-        // Handle user input
+
         int key = rlutil::getkey();
-        
-        if (key == rlutil::KEY_ESCAPE) {
-            break;
-        }
-        else if (key == rlutil::KEY_BACKSPACE && !userInput.empty()) {
+        if (key == rlutil::KEY_BACKSPACE && !userInput.empty())
+        {
             userInput.pop_back();
         }
-        else if (key == rlutil::KEY_SPACE) {
-            userInput += ' ';
+        else if (key == 27)
+        { // ESC to exit
+            break;
         }
-        else if (std::isprint(key)) {  // Only add printable characters
-            userInput += static_cast<char>(key);
+        else if (key >= ' ' && key <= '~')
+        { // Printable ASCII range
+            userInput.push_back(static_cast<char>(key));
         }
     }
-    
-    // Clear screen when exiting
-    rlutil::cls();
 }
 
-int main() {
+int main()
+{
     auto wordTree = readDictionary("dictionary.txt");
+    if (!wordTree)
+    {
+        std::cerr << "Failed to initialize word tree." << std::endl;
+        return 1; // Return error code
+    }
     runPredictiveTextUI(wordTree);
     return 0;
 }
